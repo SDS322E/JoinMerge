@@ -38,21 +38,31 @@ ratings
 
 ## Sample a product review
 set.seed(2023-02-12)
-ratings |> 
+original <- ratings |> 
     sample_n(1) |> 
     select(customer_id, product_id, rating, product_title)
+original
 
 ## Find products reviewed by other customers
 ratings |> 
-    filter(product_id == "B00FGDEAC0"  # Find other customers who reviewed this
-           & customer_id != "44720276") |>   # Remove original reviewer
+    # Find other customers who reviewed this
+    inner_join(original |> 
+                   select(product_id), 
+               by = "product_id") |> 
+    # Remove original reviewer
+    anti_join(original |> 
+                  select(customer_id), 
+              by = "customer_id") |>   
     select(customer_id) |> 
-    left_join(dat, by = "customer_id",  # join with all data to get other products
-              multiple = "all") |> 
-    select(customer_id, product_id, rating, product_title) |> 
-    filter(rating == 5)
-
-
+    # Join with all data to get other products
+    left_join(dat, by = "customer_id") |>  
+    # Remove the original product
+    anti_join(original |> 
+                  select(product_id), 
+              by = "product_id") |> 
+    # Only keep products with 5-star ratings
+    filter(rating == 5) |> 
+    select(customer_id, product_id, rating, product_title)
 
 
 
